@@ -6,17 +6,20 @@ import sqlite3
 import os, sys
 from ctypes import *
 from pkg_resources import resource_filename as get_so_dll
-from platform import architecture
+from platform import architecture, system as get_system
 
+system = get_system()
 arch32or64, plat = architecture()
 
-if plat == 'WindowsPE':
+if system == 'Windows':
     if arch32or64 == '32bit':
         libname = get_so_dll('timsdata','cpp/win32/timsdata.dll')
     else:
         libname = get_so_dll('timsdata','cpp/win64/timsdata.dll')
-elif plat == 'Linux' and arch32or64 == '64bit':
+elif system == 'Linux' and arch32or64 == '64bit':
     libname = get_so_dll('timsdata','cpp/libtimsdata.so')
+elif system == 'Darwin':
+    raise OSError('MacOS not yet supported')
 else:
     raise OSError("This OS is not supported (yet).")
 
