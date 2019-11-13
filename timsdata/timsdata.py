@@ -18,7 +18,7 @@ if plat == 'WindowsPE':
 else:
     # assuming LINUX or MAC(not tested that yet)
     libname = get_so_dll('timsdata','cpp/libtimsdata.so')
-    #libname = '/home/matteo/Projects/bruker/timsdata/timsdata/cpp/libtimsdata.so'
+    #libname = '/home/matteo/Projects/bruk  timsdata/timsdata/cpp/libtimsdata.so'
 
 # DATA_PATH = pkg_resources.resource_filename('<package name>', 'data/')
 # DB_FILE = pkg_resources.resource_filename('<package name>', 'data/sqlite.db')

@@ -6,7 +6,7 @@ setup(  name='timsdata',
         version='0.0.1',
         description='Description.',
         long_description='Long description.',
-        author='MatteoLacki',
+        author='Matteo Lacki',
         author_email='matteo.lacki@gmail.com',
         # url='https://github.com/MatteoLacki/MIDIA.git',
         keywords=['Great module', 'Devel Inside'],
@@ -18,11 +18,12 @@ setup(  name='timsdata',
                      'Programming Language :: Python :: 3.7'],
         install_requires=['numpy'],
         package_dir={'timsdata':'timsdata'},
-        packages_data = {
+        package_data = {
                 'timsdata':[
                     'cpp/win32/timsdata.dll',
+                    'cpp/win32/timsdata.lib',
                     'cpp/win64/timsdata.dll',
+                    'cpp/win64/timsdata.lib',
                     'cpp/libtimsdata.so'
-                ]},
-        include_package_data=True
+                ]}
 )
