@@ -15,10 +15,10 @@ if plat == 'WindowsPE':
         libname = get_so_dll('timsdata','cpp/win32/timsdata.dll')
     else:
         libname = get_so_dll('timsdata','cpp/win64/timsdata.dll')
-else:
-    # assuming LINUX or MAC(not tested that yet)
+elif plat == 'Linux' and arch32or64 == '64bit':
     libname = get_so_dll('timsdata','cpp/libtimsdata.so')
-    #libname = '/home/matteo/Projects/bruk  timsdata/timsdata/cpp/libtimsdata.so'
+else:
+    raise OSError("This OS is not supported (yet).")
 
 # DATA_PATH = pkg_resources.resource_filename('<package name>', 'data/')
 # DB_FILE = pkg_resources.resource_filename('<package name>', 'data/sqlite.db')
