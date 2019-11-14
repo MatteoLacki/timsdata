@@ -112,7 +112,7 @@ class TimsData:
 
     def __del__ (self):
         if hasattr(self, 'handle'):
-            self.dll.tims_close(self.handle)         
+            self.dll.tims_close(self.handle)
             
     def __callConversionFunc (self, frame_id, input_data, func):
 
@@ -240,3 +240,10 @@ class TimsData:
             throwLastTimsDataError(self.dll)
         
         return result
+
+    def __del__(self):
+        """Destructor.
+
+        Basically closes the DB connection.
+        """
+        self.conn.close()
