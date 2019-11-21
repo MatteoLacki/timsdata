@@ -91,6 +91,8 @@ def decodeArrayOfStrings (blob):
     if sys.version_info.major == 3:
         return str(blob, 'utf-8').split('\0')[:-1]
         
+
+
 class TimsData:
     def __init__ (self, analysis_directory, use_recalibrated_state=False):
         """Initialize TimsData.
@@ -117,50 +119,108 @@ class TimsData:
 
         self.initial_frame_buffer_size = 128 # may grow in readScans()
 
+
     def __del__ (self):
         """Destructor."""
         if hasattr(self, 'handle'):
             self.dll.tims_close(self.handle)
         self.conn.close()
-            
-    def __callConversionFunc (self, frame_id, input_data, func):
 
+            
+    def __callConversionFunc(self, frame_id, input_data, func):
+        """General wrapper to export function results to numpy arrays.
+
+        Args:
+            frame_id (int): The number of the considered frame.
+            input_data (iterable of floats64, np.array): The floating point input.
+            func (function): function to be called on the input.
+        Returns:
+            np.array: the evaluation of the 'func' on the 'input_data'.
+        """
         if type(input_data) is np.ndarray and input_data.dtype == np.float64:
             # already "native" format understood by DLL -> avoid extra copy
             in_array = input_data
         else:
             # convert data to format understood by DLL:
             in_array = np.array(input_data, dtype=np.float64)
-
         cnt = len(in_array)
         out = np.empty(shape=cnt, dtype=np.float64)
         success = func(self.handle, frame_id,
                        in_array.ctypes.data_as(POINTER(c_double)),
                        out.ctypes.data_as(POINTER(c_double)),
                        cnt)
-
         if success == 0:
             throwLastTimsDataError(self.dll)
 
         return out
 
-    def indexToMz (self, frame_id, mzs):
-        return self.__callConversionFunc(frame_id, mzs, self.dll.tims_index_to_mz)
+    def indexToMz(self, frame_id, mass_idxs):
+        """Translate mass indices (time of flight) to true mass over charge values.
+
+        Args:
+            frame_id (int): The frame number.
+            mzs (np.array): mass indices to convert.
+        Returns:
+            np.array: mass over charge values."""
+        return self.__callConversionFunc(frame_id, mass_idxs, self.dll.tims_index_to_mz)
         
-    def mzToIndex (self, frame_id, mzs):
+    def mzToIndex(self, frame_id, mzs):
+        """Translate mass over charge values to mass indices (time of flight).
+
+        Args:
+            frame_id (int): The frame number.
+            mzs (np.array): Mass over charge to convert.
+        Returns:
+            np.array: Times of flight."""
         return self.__callConversionFunc(frame_id, mzs, self.dll.tims_mz_to_index)
         
-    def scanNumToOneOverK0 (self, frame_id, mzs):
-        return self.__callConversionFunc(frame_id, mzs, self.dll.tims_scannum_to_oneoverk0)
+    def scanNumToOneOverK0(self, frame_id, scans):
+        """Translate scan number to ion mobility 1/k0.
 
-    def oneOverK0ToScanNum (self, frame_id, mzs):
-        return self.__callConversionFunc(frame_id, mzs, self.dll.tims_oneoverk0_to_scannum)
+        See 'oneOverK0ToScanNum' for invert function.
 
-    def scanNumToVoltage (self, frame_id, mzs):
-        return self.__callConversionFunc(frame_id, mzs, self.dll.tims_scannum_to_voltage)
+        Args:
+            frame_id (int): The frame number.
+            scans (np.array): Mass over charge to convert.
+        Returns:
+            np.array: Ion mobiilities 1/k0."""
+        return self.__callConversionFunc(frame_id, scans, self.dll.tims_scannum_to_oneoverk0)
 
-    def voltageToScanNum (self, frame_id, mzs):
-        return self.__callConversionFunc(frame_id, mzs, self.dll.tims_voltage_to_scannum)
+    def oneOverK0ToScanNum (self, frame_id, mobilities):
+        """Translate ion mobilities 1/k0 to scan numbers.
+
+        See 'scanNumToOneOverK0' for invert function.
+
+        Args:
+            frame_id (int): The frame number.
+            mobilities (np.array): Ion mobility values to convert.
+        Returns:
+            np.array: Scan numbers."""
+        return self.__callConversionFunc(frame_id, mobilities, self.dll.tims_oneoverk0_to_scannum)
+
+    def scanNumToVoltage (self, frame_id, scans):
+        """Translate scan number to voltages.
+
+        See 'voltageToScanNum' for invert function.
+
+        Args:
+            frame_id (int): The frame number.
+            scans (np.array): Mass over charge to convert.
+        Returns:
+            np.array: Voltages applied to release ions from TIMS."""
+        return self.__callConversionFunc(frame_id, scans, self.dll.tims_scannum_to_voltage)
+
+    def voltageToScanNum (self, frame_id, voltages):
+        """Translate voltages to scan numbers.
+
+        See 'voltageToScanNum' for invert function.
+
+        Args:
+            frame_id (int): The frame number.
+            voltages (np.array): Voltages to convert.
+        Returns:
+            np.array: Scan numbers"""
+        return self.__callConversionFunc(frame_id, voltages, self.dll.tims_voltage_to_scannum)
 
     def get_peakCnts_massIdxs_intensities_array(self,
                                                 frame,
@@ -190,9 +250,11 @@ class TimsData:
             cnt = int(self.initial_frame_buffer_size) # for python 3.5
             buf = np.empty(shape=cnt, dtype=np.uint32)
             len = 4 * cnt
-            required_len = self.dll.tims_read_scans_v2(self.handle,
-                frame, scan_begin, scan_end,
-                buf.ctypes.data_as(POINTER(c_uint32)), len)
+
+            reader = self.dll.tims_read_scans_v2
+            # reader = self.dll.tims_read_scans_internal # 5% faster
+
+            required_len = reader(self.handle,frame, scan_begin, scan_end, buf.ctypes.data_as(POINTER(c_uint32)), len)
             if required_len == 0:
                 throwLastTimsDataError(self.dll)
             if required_len > len:
@@ -229,7 +291,7 @@ class TimsData:
         d = scan_end - scan_begin
         for i in range(scan_begin, scan_end):
             npeaks = buf[i-scan_begin]
-            indices     = buf[d : d+npeaks]
+            indices = buf[d : d+npeaks]
             d += npeaks
             intensities = buf[d : d+npeaks]
             d += npeaks
@@ -261,7 +323,9 @@ class TimsData:
                 d += npeaks
                 yield (i, indices, intensities)
 
-    def frame_scan_mzIdx_I_numpy(self, frame, scan_begin, scan_end):
+
+
+    def frame_scan_mzIdx_I_array(self, frame, scan_begin, scan_end):
         """Get a 2D array of data for a given frame and scan region.
 
         The output array contains four columns: first repeats the frame number,
@@ -271,10 +335,10 @@ class TimsData:
             frame (int, iterable, slice): Frames to output.
             scan_begin (int): Lower scan.
             scan_end (int): Upper scan.
-
         Returns:
             numpy.array: four-columns array with data.
         """
+        # TO C++ TO C++ TO C++ TO C++ TO C++ TO C++
         x = self.get_peakCnts_massIdxs_intensities_array(frame,
                                                          scan_begin,
                                                          scan_end,
@@ -294,7 +358,7 @@ class TimsData:
             d += npeaks
             m += npeaks
         return X
-
+        
 
     def count_peaks_per_frame_scanRange(self, frame, scan_begin, scan_end):
         """Count peaks in a given frame and scan range.
@@ -384,6 +448,6 @@ class TimsData:
         return result
 
     @lru_cache(maxsize=1)
-    def table_names(self):
+    def list_tables_in_tdf(self):
         """Retrieve names of tables in 'analysis.tdf' SQLite3 database."""
         return [f[0] for f in self.conn.execute(f"SELECT name FROM sqlite_master WHERE TYPE = 'table'")]
