@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(  name='timsdata',
         packages=find_packages(),
-        version='0.0.2',
+        version='0.0.3',
         description='Description.',
         long_description='Long description.',
         author='Matteo Lacki',

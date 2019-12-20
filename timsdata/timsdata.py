@@ -4,11 +4,13 @@
 import numpy as np
 import sqlite3
 import os, sys
-from ctypes import *
+from ctypes import * #ugly
 from functools import lru_cache
 from pkg_resources import resource_filename as get_so_dll
 from pathlib import Path
 from platform import architecture, system as get_system
+
+from .scans import Scans
 
 
 system = get_system()
@@ -151,8 +153,17 @@ class TimsData:
                        cnt)
         if success == 0:
             throwLastTimsDataError(self.dll)
-
         return out
+
+    def __massIdx2mz(self, frame_id, results_storage):
+        success = func(self.handle, 
+                       frame_id,
+                       in_array.ctypes.data_as(POINTER(c_double)),
+                       out.ctypes.data_as(POINTER(c_double)),
+                       cnt)
+        if success == 0:
+            throwLastTimsDataError(self.dll)
+
 
     def indexToMz(self, frame_id, mass_idxs):
         """Translate mass indices (time of flight) to true mass over charge values.
@@ -249,15 +260,15 @@ class TimsData:
         while True:
             cnt = int(self.initial_frame_buffer_size) # for python 3.5
             buf = np.empty(shape=cnt, dtype=np.uint32)
-            len = 4 * cnt
+            length = 4 * cnt
 
             reader = self.dll.tims_read_scans_v2
             # reader = self.dll.tims_read_scans_internal # 5% faster
 
-            required_len = reader(self.handle,frame, scan_begin, scan_end, buf.ctypes.data_as(POINTER(c_uint32)), len)
+            required_len = reader(self.handle,frame, scan_begin, scan_end, buf.ctypes.data_as(POINTER(c_uint32)), length)
             if required_len == 0:
                 throwLastTimsDataError(self.dll)
-            if required_len > len:
+            if required_len > length:
                 if required_len > 16777216: # arbitrary limit for now...
                     raise RuntimeError("Maximum expected frame size exceeded.")
                 self.initial_frame_buffer_size = required_len / 4 + 1 # grow buffer
@@ -269,8 +280,13 @@ class TimsData:
         else:
             return buf
         
+    def scans(self, frame, scan_begin, scan_end):
+        """Get info on used scans per frame."""
+        pass
+
+
     
-    def readScans (self, frame_id, scan_begin, scan_end):
+    def readScans(self, frame_id, scan_begin, scan_end):
         """Read a selection of scans from a given frame.
 
         Args:
@@ -282,11 +298,8 @@ class TimsData:
         """
         buf = self.get_peakCnts_massIdxs_intensities_array(frame_id,
                                                            scan_begin,
-                                                           scan_end)
-        if debug:   
-            print(buf)
-            print(type(buf))
-            print(buf.shape)
+                                                           scan_end,
+                                                           False)
         result = []
         d = scan_end - scan_begin
         for i in range(scan_begin, scan_end):
@@ -324,19 +337,20 @@ class TimsData:
                 yield (i, indices, intensities)
 
 
-
-    def frame_scan_mzIdx_I_array(self, frame, scan_begin, scan_end):
+    def frame_array(self, frame, scan_begin, scan_end):
         """Get a 2D array of data for a given frame and scan region.
 
-        The output array contains four columns: first repeats the frame number,
-        second contains scan numbers, third contains mass indices, and the last contains intensities.
+        The output array contains three arrays.
+        By default, these contain respectively ion mobility, mass to charge ratio, and intensity in the given frame.
+        If selected raw, these will contain scan number, mass index and intensity.
         
         Args:
             frame (int, iterable, slice): Frames to output.
             scan_begin (int): Lower scan.
             scan_end (int): Upper scan.
+            raw (bool): Report raw data?
         Returns:
-            numpy.array: four-columns array with data.
+            tuple: np.arrays with ion mobilities/scan numbers, mass to charge ratios/mass indices, and intensities in the selected frame. 
         """
         # TO C++ TO C++ TO C++ TO C++ TO C++ TO C++
         x = self.get_peakCnts_massIdxs_intensities_array(frame,
@@ -439,8 +453,8 @@ class TimsData:
             result[precursor_id] = (mz_values[0:num_peaks], area_values[0:num_peaks])
         
         rc = self.dll.tims_read_pasef_msms_for_frame(self.handle,
-                                           frame_id,
-                                           callback_for_dll)
+                                                     frame_id,
+                                                     callback_for_dll)
 
         if rc == 0:
             throwLastTimsDataError(self.dll)
@@ -451,3 +465,16 @@ class TimsData:
     def list_tables_in_tdf(self):
         """Retrieve names of tables in 'analysis.tdf' SQLite3 database."""
         return [f[0] for f in self.conn.execute(f"SELECT name FROM sqlite_master WHERE TYPE = 'table'")]
+
+    def scans_usage(self, frames, min_scan, max_scan):
+        """Plot the number of peaks detected per each (frame,scan) withing the selected data cube.
+
+        Args:
+            frames (iterable): Number of frames to output.
+            min_scan (int): Minimal scan number.
+            max_scan (int): Maximal scan number.
+        """
+        s, S = min_scan, max_scan
+        peaks = [self.get_peakCnts_massIdxs_intensities_array(int(f),s,S)[s:S]
+                 for f in frames]
+        return Scans(np.vstack(peaks), frames, s, S)
