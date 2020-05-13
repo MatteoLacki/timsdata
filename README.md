@@ -30,7 +30,15 @@ pip3 install -e .
 from timsdata.timsdata import TimsData
 
 D = TimsData('path_to_your_data')
+
+# choose some frame and scan limits
+frame_no, min_scan, max_scan = 100, 0, 918
+
+# pure Python structures
 D.readScans(frame_no, min_scan, max_scan)
+
+# numpy array
+D.frame_array(frame_no, min_scan, max_scan)
 ```
 
 Do observe, that you must know which values to put there.
