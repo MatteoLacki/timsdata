@@ -104,7 +104,7 @@ class TimsData:
 
         Args:
             analysis_directory (str, unicode string): path to the folder containing 'analysis.tdf'
-            use_recalibrated_state: ???
+            use_recalibrated_state (boolean): no idea what it does.
         """
         if sys.version_info.major == 2:
             if not isinstance(analysis_directory, unicode):
@@ -121,8 +121,7 @@ class TimsData:
             throwLastTimsDataError(self.dll)
 
         self.conn = sqlite3.connect(str(analysis_directory/"analysis.tdf"))
-
-        self.initial_frame_buffer_size = 128 # may grow in readScans()
+        self.initial_frame_buffer_size = 128
 
 
     def __del__ (self):

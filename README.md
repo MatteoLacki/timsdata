@@ -18,7 +18,7 @@ For fresher versions:
 pip3 install git+https://github.com/MatteoLacki/timsdata
 ```
 
-From development:
+For development:
 ```{bash}
 github clone https://github.com/MatteoLacki/timsdata
 cd timsdata
@@ -33,8 +33,14 @@ D = TimsData('path_to_your_data')
 D.readScans(frame_no, min_scan, max_scan)
 ```
 
-For way more options, check-out [TimsPy](https://github.com/MatteoLacki/timspy).
+Do observe, that you must know which values to put there.
+If you don't, consider [TimsPy](https://github.com/MatteoLacki/timspy).
+
 
 ## Plans for future
 
 We will gradually introduce cppyy to the project and fill up numpy arrays in C++.
+
+
+## Law
+Please read THIRD-PARTY-LICENSE-README.txt for legal aspects of using the software.
