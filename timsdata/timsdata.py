@@ -13,8 +13,6 @@ from pkg_resources import resource_filename as get_so_dll
 from pathlib import Path
 from platform import architecture, system as get_system
 
-from .scans import Scans
-
 
 system = get_system()
 arch32or64, plat = architecture()
@@ -467,16 +465,3 @@ class TimsData:
     def list_tables_in_tdf(self):
         """Retrieve names of tables in 'analysis.tdf' SQLite3 database."""
         return [f[0] for f in self.conn.execute(f"SELECT name FROM sqlite_master WHERE TYPE = 'table'")]
-
-    def scans_usage(self, frames, min_scan, max_scan):
-        """Plot the number of peaks detected per each (frame,scan) withing the selected data cube.
-
-        Args:
-            frames (iterable): Number of frames to output.
-            min_scan (int): Minimal scan number.
-            max_scan (int): Maximal scan number.
-        """
-        s, S = min_scan, max_scan
-        peaks = [self.get_peakCnts_massIdxs_intensities_array(int(f),s,S)[s:S]
-                 for f in frames]
-        return Scans(np.vstack(peaks), frames, s, S)

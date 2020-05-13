@@ -34,10 +34,12 @@ D = TimsData('path_to_your_data')
 # choose some frame and scan limits
 frame_no, min_scan, max_scan = 100, 0, 918
 
-# pure Python structures
+# lists of numpy arrays
 D.readScans(frame_no, min_scan, max_scan)
 
-# numpy array
+# one 4-dimensional numpy array
+# columns corresponds to:
+# frame_number, scan_number, mass_index (time of flight), intensity
 D.frame_array(frame_no, min_scan, max_scan)
 ```
 
