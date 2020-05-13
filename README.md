@@ -1,4 +1,4 @@
-# Wrapper around TIMS data for Bruker.
+# Quick intro
 **timsdata** is a module that wraps Bruker's tdf-sdk into a module, for convenience of not having to copy it in all possible projects.
 
 # Requirements
