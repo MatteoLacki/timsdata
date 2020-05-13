@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(  name='timsdata',
         packages=find_packages(),
-        version='1.0.0',
+        version='1.0.1',
         description='timsdata: Bruker TDF wrapped in a Python module.',
         long_description='This Python module wraps Bruker timsTOF TDF.',
         author='Matteo Lacki',
