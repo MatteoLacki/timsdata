@@ -37,13 +37,33 @@ frame_no, min_scan, max_scan = 100, 0, 918
 # lists of numpy arrays
 D.readScans(frame_no, min_scan, max_scan)
 
+## THIS RESULTS IN ARRAYS WITH TIME OF FLIGHTS AND INTENSITIES
+## EACH ONE CORRESPONDS TO ONE SCAN, PER ONE FRAME (ONE RETENTION-TIME UNIT)
+# [...
+# (array([], dtype=uint32), array([], dtype=uint32)),
+# (array([], dtype=uint32), array([], dtype=uint32)),
+# (array([], dtype=uint32), array([], dtype=uint32)),
+# (array([389679, 394578], dtype=uint32), array([9, 9], dtype=uint32)),
+# (array([], dtype=uint32), array([], dtype=uint32)),
+# (array([ 78036, 210934, 211498, 351984], dtype=uint32),
+#  array([9, 9, 9, 9], dtype=uint32)),
+#  ...]
+
+
+D.frame_array(frame_no, min_scan, max_scan)
 # one 4-dimensional numpy array
 # columns corresponds to:
 # frame_number, scan_number, mass_index (time of flight), intensity
-D.frame_array(frame_no, min_scan, max_scan)
+# array([[   100,     35, 389679,      9],
+#        [   100,     35, 394578,      9],
+#        [   100,     37,  78036,      9],
+#        ...,
+#        [   100,    911, 294204,      9],
+#        [   100,    913, 248788,      9],
+#        [   100,    915, 100120,    120]])
 ```
 
-Do observe, that you must know which values to put there.
+Do observe, that you must know which values: to put there.
 If you don't, consider [TimsPy](https://github.com/MatteoLacki/timspy).
 
 
