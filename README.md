@@ -1,12 +1,12 @@
 ### Wrapper around TIMS data for Bruker.
+**timsdata** is a module that wraps Bruker's TDF into a module, for convenience of not having to copy it in all possible projects.
 
-
-## Installation
-
-# requirements
+# Requirements
 Linux or Windows only for now.
-Python3.6 or higher, not tested on 3.8 yet.
+Python3.6 or higher.
 
+
+# Installation
 From terminal (assuming you have python and pip included in the system PATH:
 
 ```{python}
@@ -33,7 +33,8 @@ D = TimsData('path_to_your_data')
 D.readScans(frame_no, min_scan, max_scan)
 ```
 
-For more options, stay tuned for the MIDIA module!
-(or write me about it at matteo.lacki@gmail.com)
+For way more options, check-out [TimsPy](https://github.com/MatteoLacki/timspy).
 
+## Plans for future
 
+We will gradually introduce cppyy to the project and fill up numpy arrays in C++.

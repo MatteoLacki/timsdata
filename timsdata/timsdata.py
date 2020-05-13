@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Python wrapper for timsdata.dll"""
+"""Python wrapper for timsdata.dll\
+
+Courtesy of the BRUKER company.
+"""
 
 import numpy as np
 import sqlite3
