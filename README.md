@@ -74,3 +74,7 @@ We will gradually introduce cppyy to the project and fill up numpy arrays in C++
 
 ## Law
 Please read THIRD-PARTY-LICENSE-README.txt for legal aspects of using the software.
+
+## Special thanks
+We would like to thank Michael Krause, Sascha Winter, and Sven Brehmer, all from Bruker Daltonik GmbH, for their magnificent work in developing tfd-sdk.
+
