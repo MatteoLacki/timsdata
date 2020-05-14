@@ -1,6 +1,6 @@
 def parse_idx(x):
     if isinstance(x, slice):
-        s = 0 is x.start is None else x.start
+        s = 0 if x.start is None else x.start
         e = x.stop
         if x.step != None:
             raise Warning("Step is not being consider for now.")
