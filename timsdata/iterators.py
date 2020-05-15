@@ -8,3 +8,10 @@ class ComfyIter(object):
 
     def __getitem__(self, x):
         return self.D._iter(x)
+
+
+def infinite_range(start, step):
+    i = start
+    while True:
+        yield i
+        i += step

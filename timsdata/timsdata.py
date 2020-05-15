@@ -6,17 +6,18 @@ Michael Krause, Sascha Winter, and Sven Bremer
 only slightly pythonized by Mateusz K. Lacki.
 """
 
-import numpy as np
-import sqlite3
-import os, sys
+from collections.abc import Iterable
 from ctypes import * #ugly
 from functools import lru_cache
-from pkg_resources import resource_filename as get_so_dll
+import numpy as np
+import os, sys
 from pathlib import Path
 from platform import architecture, system as get_system
+from pkg_resources import resource_filename as get_so_dll
+import sqlite3
 
-from .slice_ops import parse_idx
 from .iterators import ComfyIter
+from .slice_ops import parse_idx
 
 system = get_system()
 arch32or64, plat = architecture()
@@ -363,37 +364,31 @@ class TimsData:
         return X
 
 
-    def iter_arrays(self, frames, scan_begin, scan_end):
-        """Iter arrays containing a given scan range for the frames of interest.
+    def _iter(self, x):
+        """Private iteration over arrays.
 
-        Args:
-            frames (iterable): frames to report
-            scan_begin (int): first scan
-            scan_end (int): last scan (which is not included).
-
-        Yields:
-            np.array with frame number, scan numbers, mass to charge ratios/mass indices, and intensities in the selected frame.
+        You can call it explicitly, but better call it like D.iter[1:10, 100:200].
+        x is something that can be handled by __getitem__.
         """
+        assert isinstance(x, tuple) and len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
+        frames, scans = x
+        scan_begin, scan_end = parse_idx(scans)
+        if isinstance(frames, slice):
+            start = 1 if frames.start is None else frames.start
+            if frames.stop is None:
+                raise IndexError('Need to provide the number of the last frame. Otherwise, use "timspy".')
+            if frames.step is None:
+                frames = range(start, frames.stop)
+            else:
+                frames = range(start, frames.stop, frames.step)
+        elif isinstance(frames, Iterable):
+            print('yey!')
+        else: # last resort in the battle against anything...
+            frames = np.r_[frames] # just in case
         for f in frames:
             frame = self.frame_array(f, scan_begin, scan_end)
             if len(frame): 
                 yield frame
-
-
-    def _iter(self, x):
-        """Private iteration over arrays.
-
-        You can call it explicitly, but better call it like D.iter[1:10].
-        x is something that can be handled by __getitem__.
-        """
-        print(x)
-        assert isinstance(x, tuple) and len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
-        frames, scans = x
-        scan_begin, scan_end = parse_idx(scans)
-        if isinstance(frames, slice) and frames.start is None:
-            frames = slice(1, frames.stop)
-        frames = np.r_[frames]
-        yield from self.iter_arrays(frames, scan_begin, scan_end)
 
 
     def __getitem__(self, x):
