@@ -153,6 +153,7 @@ class TimsData:
             throwLastTimsDataError(self.dll)
         return out
 
+
     def __massIdx2mz(self, frame_id, results_storage):
         success = func(self.handle, 
                        frame_id,
@@ -172,7 +173,8 @@ class TimsData:
         Returns:
             np.array: mass over charge values."""
         return self.__callConversionFunc(frame_id, mass_idxs, self.dll.tims_index_to_mz)
-        
+
+
     def mzToIndex(self, frame_id, mzs):
         """Translate mass over charge values to mass indices (time of flight).
 
@@ -183,6 +185,7 @@ class TimsData:
             np.array: Times of flight."""
         return self.__callConversionFunc(frame_id, mzs, self.dll.tims_mz_to_index)
         
+
     def scanNumToOneOverK0(self, frame_id, scans):
         """Translate scan number to ion mobility 1/k0.
 
@@ -194,6 +197,7 @@ class TimsData:
         Returns:
             np.array: Ion mobiilities 1/k0."""
         return self.__callConversionFunc(frame_id, scans, self.dll.tims_scannum_to_oneoverk0)
+
 
     def oneOverK0ToScanNum(self, frame_id, mobilities):
         """Translate ion mobilities 1/k0 to scan numbers.
@@ -207,6 +211,7 @@ class TimsData:
             np.array: Scan numbers."""
         return self.__callConversionFunc(frame_id, mobilities, self.dll.tims_oneoverk0_to_scannum)
 
+
     def scanNumToVoltage(self, frame_id, scans):
         """Translate scan number to voltages.
 
@@ -218,6 +223,7 @@ class TimsData:
         Returns:
             np.array: Voltages applied to release ions from TIMS."""
         return self.__callConversionFunc(frame_id, scans, self.dll.tims_scannum_to_voltage)
+
 
     def voltageToScanNum(self, frame_id, voltages):
         """Translate voltages to scan numbers.
@@ -232,6 +238,7 @@ class TimsData:
         return self.__callConversionFunc(frame_id,
                                          voltages,
                                          self.dll.tims_voltage_to_scannum)
+
 
     def peakCnts_massIdxs_intensities(self,
                                       frame,
@@ -397,7 +404,11 @@ class TimsData:
         Returns:
             np.array with frame numbers, scan numbers, mass to charge ratios/mass indices, and intensities in the selected frame.
         """
-        return np.concatenate(list(self._iter(x)))
+        arrays = list(self._iter(x))
+        if arrays:
+            return np.concatenate(arrays)
+        else:
+            return np.empty(shape=(0,4), dtype=np.int)
 
 
     def count_peaks(self, frame, scan_begin, scan_end):
@@ -495,6 +506,7 @@ class TimsData:
             throwLastTimsDataError(self.dll)
         
         return result
+
 
     @lru_cache(maxsize=1)
     def list_tables_in_tdf(self):
