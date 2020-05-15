@@ -16,6 +16,7 @@ from pathlib import Path
 from platform import architecture, system as get_system
 
 from .slice_ops import parse_idx
+from .iterators import ComfyIter
 
 system = get_system()
 arch32or64, plat = architecture()
@@ -116,6 +117,7 @@ class TimsData:
             throwLastTimsDataError(self.dll)
         self.conn = sqlite3.connect(str(analysis_directory/"analysis.tdf"))
         self.initial_frame_buffer_size = 128
+        self.iter = ComfyIter(self)
 
 
     def __del__ (self):
@@ -368,7 +370,23 @@ class TimsData:
         for f in frames:
             frame = self.frame_array(f, scan_begin, scan_end)
             if len(frame): 
-                yield frame 
+                yield frame
+
+
+    def _iter(self, x):
+        """Private iteration over arrays.
+
+        You can call it explicitly, but better call it like D.iter[1:10].
+        x is something that can be handled by __getitem__.
+        """
+        print(x)
+        assert isinstance(x, tuple) and len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
+        frames, scans = x
+        scan_begin, scan_end = parse_idx(scans)
+        if isinstance(frames, slice) and frames.start is None:
+            frames = slice(1, frames.stop)
+        frames = np.r_[frames]
+        yield from self.iter_arrays(frames, scan_begin, scan_end)
 
 
     def __getitem__(self, x):
@@ -376,17 +394,10 @@ class TimsData:
 
         Args:
             x (tuple): First element corresponds to iterable/slice of frames. Second element corresponds to slice/iterable of scans. For now, only selection by scan_begin:scan_end is supported.
-
         Returns:
             np.array with frame numbers, scan numbers, mass to charge ratios/mass indices, and intensities in the selected frame.
         """
-        assert isinstance(x, tuple) and len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
-        frames, scans = x
-        scan_begin, scan_end = parse_idx(scans)
-        if isinstance(frames, slice) and frames.start is None:
-            frames = slice(1, frames.stop)
-        frames = np.r_[frames]
-        return np.concatenate(list(self.iter_arrays(frames, scan_begin, scan_end)))
+        return np.concatenate(list(self._iter(x)))
 
 
     def count_peaks(self, frame, scan_begin, scan_end):
