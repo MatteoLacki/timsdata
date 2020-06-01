@@ -1,13 +1,16 @@
-class ComfyIter(object):
-    """A simple trick to use D.iter[1:10, 50:100:2] like expressions.
+from functools import update_wrapper
 
-    Simply, add self.iter = ComfyIter(self) and define in that class the __iter method that can ise these slices and voila.
+
+class ComfyIter(object):
+    """Using ComfyIter enables parsing of range exressions.
+    This way, you might do selection with square brackets, e.g. D.iter[1:10, 50:100:2]
     """
-    def __init__(self, D):
-        self.D = D
+    def __init__(self, iterator):
+        self.iterator = iterator
+        self = update_wrapper(self, iterator)
 
     def __getitem__(self, x):
-        return self.D._iter(x)
+        return self.iterator(x)
 
 
 def infinite_range(start, step):

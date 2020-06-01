@@ -118,7 +118,7 @@ class TimsData:
             throwLastTimsDataError(self.dll)
         self.conn = sqlite3.connect(str(analysis_directory/"analysis.tdf"))
         self.initial_frame_buffer_size = 128
-        self.iter = ComfyIter(self)
+        self.iter = ComfyIter(self.iter_arrays)
 
 
     def __del__ (self):
@@ -364,11 +364,22 @@ class TimsData:
         return X
 
 
-    def _iter(self, x):
-        """Private iteration over arrays.
+    def iter_arrays(self, x):
+        """Iterate over arrays.
 
-        You can call it explicitly, but better call it like D.iter[1:10, 100:200].
-        x is something that can be handled by __getitem__.
+        You can call this method explicitly, but it is more comfortable to use the equivalent self.iter class.
+        If your instance is called D, then you can call D.iter[1:20, 1:900] to extract scans from 1 to 899 for
+        frames from 1 to 19. The same can be obtained with D.iter_arrays((slice(1,20),slice(1,900))).
+        Other expressions will also work, i.e. any iterable that will stay within the meaningful limits for frame and scan numbers.
+        However, in timsdata, you have to precise which scans you want to extract.
+        If you don't know the limits, try using 'timspy' module that knows where to find them.
+
+        Args:
+            x (slice,iterable,range): Selection of arrays to extract, specified by: frame and scan numbers.  
+        
+        Yields:
+            np.array: Long representation of the underlying data. The four columns contain: the frame number,
+            the scan number, the time of flight index, and the intensity of the selected data-points.
         """
         assert isinstance(x, tuple) and len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
         frames, scans = x
@@ -399,11 +410,11 @@ class TimsData:
         Returns:
             np.array with frame numbers, scan numbers, mass to charge ratios/mass indices, and intensities in the selected frame.
         """
-        arrays = list(self._iter(x))
+        arrays = list(self.iter_arrays(x))
         if arrays:
             return np.concatenate(arrays)
         else:
-            return np.empty(shape=(0,4), dtype=np.int)
+            return np.empty(shape=(0,4), dtype=np.int64)
 
 
     def count_peaks(self, frame, scan_begin, scan_end):

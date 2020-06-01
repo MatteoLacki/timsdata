@@ -1,6 +1,12 @@
 def parse_idx(x):
     if isinstance(x, slice):
-        s = 0 if x.start is None else x.start
+        s = 0 
+        if x.start is None:
+            s = 0
+            if x.stop is None:
+                raise IndexError("You need to specify end of the range.")
+        else:
+            s = x.start
         e = x.stop
         if x.step != None:
             raise Warning("Step is not being consider for now.")
