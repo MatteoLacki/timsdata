@@ -6,9 +6,9 @@ THIRD-PARTY-LICENSE-README.txt
 These are the files that may be distributed by authors of software
 using TDF SDK 1.0.1.0.
 
-timsdata_sdk/linux64/libtimsdata.so
-timsdata_sdk/win32/timsdata.dll
-timsdata_sdk/win64/timsdata.dll
+./timsdata/cpp/libtimsdata.so
+./timsdata/cpp/win32/timsdata.dll
+./timsdata/cpp/win64/timsdata.dll
 
 The following two files must always accompany a distribution of one of
 the shared libraries:
